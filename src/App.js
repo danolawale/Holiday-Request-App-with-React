@@ -18,14 +18,20 @@ function App() {
     setShowModal(false)
   }
 
+  const closeModal = (e) => {
+    setShowModal(false)
+
+    e.stopPropagation()
+  }
+
   return (
     <div className="App">
       <h2>Holiday Request Table</h2>
       <button onClick={() => setShowModal(true)}>Request Holiday</button>
-      <HolidayRequestTable holidays={holidays} setHolidays={setHolidays} />
+      <HolidayRequestTable holidays={holidays} setHolidays={setHolidays}/>
 
       {showModal && <Modal>
-        <HolidayRequestForm requestHoliday={requestHoliday} nextRow={holidays.length + 1}/>
+        <HolidayRequestForm requestHoliday={requestHoliday} nextRow={holidays.length + 1} closeModal={closeModal} />
       </Modal>}
     </div>
 );

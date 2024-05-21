@@ -6,7 +6,7 @@ import { useState } from 'react'
 import Modal from './Modal'
 import HolidayRequestForm from './HolidayRequestForm'
 
-export default function HolidayRequestTable({holidays, setHolidays, showModal, setShowModal}) {
+export default function HolidayRequestTable({holidays, setHolidays}) {
 
     const [showUpdateModal, setShowUpdateModal] = useState(false)
 
@@ -14,6 +14,23 @@ export default function HolidayRequestTable({holidays, setHolidays, showModal, s
         setHolidays(prevRequests => {
             return prevRequests.filter(request => request.id !== id)
         })
+    }
+
+    const updateHoliday = (holiday) => {
+        setHolidays(prevHolidays => {
+          let index = prevHolidays.findIndex(prev => prev.id === holiday.id)
+          if(index >= 0) {
+            prevHolidays[index] = holiday
+          }
+          return prevHolidays
+        })
+    
+        setShowUpdateModal(false)
+      }
+
+    const closeModal = (e) => {console.log('logged close')
+        setShowUpdateModal(false)
+        e.stopPropagation()
     }
 
     return (
@@ -43,7 +60,7 @@ export default function HolidayRequestTable({holidays, setHolidays, showModal, s
                         <a href="#" onClick={() => setShowUpdateModal(true)}><FontAwesomeIcon icon={faPen} />
                         {showUpdateModal && 
                             <Modal>
-                                <HolidayRequestForm holiday={holiday}/>
+                                <HolidayRequestForm holiday={holiday} updateHoliday={updateHoliday} closeModal={closeModal} />
                             </Modal>
                         }
                         </a>&nbsp;&nbsp;&nbsp;

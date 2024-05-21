@@ -1,0 +1,6 @@
+//create new app
+//navigate to the directory you want to create the app in and enter
+npx create-react-app new-app-name
+
+//start server
+npm run start

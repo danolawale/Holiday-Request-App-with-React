@@ -11,7 +11,7 @@ export default function HolidayRequestForm(props) {
         return number > 9 ? number : `0${number}`
     }
 
-    const formatDate = (dt) => {
+    const formatDate = (dt, isDateTimeLocal = false) => {
         let year = datePrefix(dt.getFullYear());
         let month = datePrefix(dt.getMonth() + 1);
         let day = datePrefix(dt.getDate());
@@ -20,7 +20,13 @@ export default function HolidayRequestForm(props) {
         let minutes = datePrefix(dt.getMinutes());
         let seconds = datePrefix(dt.getSeconds());
 
-        return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+        if(isDateTimeLocal === false) {
+            return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+        } else {
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        
     }
 
     const modifyDate = (start) => {
@@ -28,11 +34,13 @@ export default function HolidayRequestForm(props) {
         let duration = start === 'full-09:00' ? 8 : 4
 
         setStartDate(prevDate => {
-            let [ bookedDate, bookedTime] = prevDate.split('T')
+            let previousDate = prevDate || convertToDateTimeLocal(props.holiday?.start)
+            let [ bookedDate, bookedTime] = previousDate.split('T')
             return formatDate(new Date(`${bookedDate}T${time}`))
         })
         setEndDate(prevDate => {
-            let [ bookedDate, bookedTime] = prevDate.split('T')
+            let previousDate = prevDate || convertToDateTimeLocal(props.holiday?.start)
+            let [ bookedDate, bookedTime] = previousDate.split('T')
             let date = new Date(`${bookedDate}T${time}`)
             date.setHours(date.getHours() + duration)
             date.setMinutes(date.getMinutes() + 30)
@@ -41,25 +49,52 @@ export default function HolidayRequestForm(props) {
         })
     }
 
+    const convertToDateTimeLocal = (dateTimeString) => {
+        if(!dateTimeString) {
+            return
+        }
+        const [dateString, timeString] = dateTimeString?.split(' ')
+        
+
+        if(!dateString) {
+            return
+        }
+
+        const [day, month, year] = dateString.split('-')
+        const [hour, minutes] = timeString.split(':')
+
+        return `${year}-${month}-${day}T${hour}:${minutes}`;
+    }
+
     const handleSubmit = (e) => {
         e.preventDefault()
         
         const request = {
-            id: props.nextRow,
+            id: props.holiday?.id || props.nextRow,
             start: startDate,
             end: endDate,
             status: 'pending',
-            requestedBy: name,
-            requestedOn: formatDate(new Date())
+            requestedBy: name || props.holiday?.requestedBy,
+            requestedOn: formatDate( new Date())
+        }
+        console.log(request)
+
+        if(props.holiday?.id) {
+            props.updateHoliday(request)
+        } else {
+            props.requestHoliday(request)
         }
 
-        props.requestHoliday(request)
+        
     }
     return (
         <form className="holiday-request-form" onSubmit={handleSubmit}>
             <label>
+                <button name="close" onClick={(e) => props.closeModal(e)}>Close...</button>
+            </label>
+            <label>
                 <span>Name</span>
-                <select onChange={(e) => setName(e.target.value)}>
+                <select onChange={(e) => setName(e.target.value)} value={name || props.holiday?.requestedBy}>
                 <option value="">Select Your Name</option>
                 <option value="James Crayford">James Crayford</option>
                 <option value="Lola Crystal">Lola Crystal</option>
@@ -71,15 +106,16 @@ export default function HolidayRequestForm(props) {
 
             <label>
                 <span>Start Date</span>
-                <input type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)}/>
+                <input type="datetime-local" value={ startDate || convertToDateTimeLocal(props.holiday?.start) } onChange={(e) => setStartDate(e.target.value)}/>
+
             </label>
 
             <label>
                 <span>End Date</span>
-                <input type="datetime-local" value={endDate} onChange={(e) => setEndDate(e.target.value)}/>
+                <input type="datetime-local" value={ endDate || convertToDateTimeLocal(props.holiday?.end) } onChange={(e) => setEndDate(e.target.value)}/>
             </label>
 
-            <label>
+            { ((startDate && endDate) || props.holiday) && (<label>
                 <span>Duration</span>
                 <select onChange={(e) => setStartTime(e.target.value)}>
                     <option>Duration Type</option>
@@ -87,14 +123,14 @@ export default function HolidayRequestForm(props) {
                     <option value="09:00">Half Day - AM</option>
                     <option value="13:00">Half Day - PM</option>
                 </select>
-            </label>
+            </label>)}
 
             <label>
                 <span>Status</span>
                 <input type="text" value="pending" disabled/>
             </label>
 
-            {startTime && <button onClick={() => modifyDate(startTime)}>Submit</button>}
+            {startTime && <button name="submit" type="submit" onClick={() => modifyDate(startTime)}>Submit</button>}
         </form>
     )
 }
